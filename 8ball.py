@@ -1,7 +1,7 @@
 import slack_sdk
 from slack_sdk.errors import SlackApiError
 import os
-import openai
+import responce
 from flask import Flask, request, jsonify
 from slackeventsapi import SlackEventAdapter
 import random
@@ -34,18 +34,7 @@ def generate_msg(text: str) -> str:
     try:
         new_prompt = system_prompt.copy()
         new_prompt.append({"role":"user","content":text})
-        response = openai_client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=new_prompt,
-            response_format={
-                "type": "text"
-            },
-            temperature=1.4,
-            max_tokens=256,
-            top_p=0.54,
-            frequency_penalty=2,
-            presence_penalty=0
-        )
+        responce = responce.get_responce(new_prompt)
         print("RETURN:",response.choices[0].message)
         result: str = response.choices[0].message.content
 
@@ -71,8 +60,6 @@ app: Flask = Flask(__name__)
 
 client: slack_sdk.WebClient = slack_sdk.WebClient(token=slack_token)
 slack_event_adapter: SlackEventAdapter = SlackEventAdapter(signing_secret, '/slack/events', app)
-
-openai_client: openai.OpenAI = openai.OpenAI(api_key=openai_api_key)
 
 postedMSGS: set = set()
 announce: bool = True
@@ -108,7 +95,7 @@ if __name__ == "__main__":
     try:
         if announce:
             client.chat_postMessage(
-                channel="#8-ball-reincarnated-testing",
+                channel="#8-ball",
                 text="The 8-ball has risen :skull:"
             )
     except Exception as e:
